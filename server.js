@@ -1,9 +1,8 @@
 const express = require('express');
 const path = require('path');
 const app = express();
-const PORT = 3000;
-// Change this line in your frontend code
-// const BACKEND_URL = (process.env.BACKEND_URL || 'http://fn-service-discovery.fn-backend.local:5000').replace(/\/+$/, '');
+const PORT = process.env.PORT || 3000;// Change this line in your frontend code
+
 const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
 
@@ -68,6 +67,8 @@ app.get("/api/message", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`Frontend UI server running at http://localhost:${PORT}`);
 });
+
+module.exports = app; // Export the app for testing purposes
