@@ -54,6 +54,20 @@ app.post('/api/submit', async (req, res) => {
     }
 });
 
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", service: "express-frontend" });
+});
+
+// Proxy to the Flask backend
+app.get("/api/message", async (req, res) => {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/message`);
+    res.status(response.status).json(await response.json());
+  } catch (err) {
+    res.status(502).json({ error: "Backend unreachable" });
+  }
+});
+
 app.listen(PORT, () => {
     console.log(`Frontend UI server running at http://localhost:${PORT}`);
 });
