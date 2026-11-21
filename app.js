@@ -1,0 +1,69 @@
+const express = require('express');
+const path = require('path');
+const app = express();
+
+const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:5000').replace(/\/+$/, '');
+
+
+app.use(express.json({ limit: '10kb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.post('/api/submit', async (req, res) => {
+    const { username, email } = req.body ?? {};
+
+    if (typeof username !== 'string' || typeof email !== 'string') {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username and email are required.'
+        });
+    }
+
+    const processedData = {
+        username: username.trim(),
+        email: email.trim().toLowerCase()
+    };
+
+    if (!processedData.username || !processedData.email) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username and email cannot be empty.'
+        });
+    }
+
+    try {
+        const backendResponse = await fetch(`${BACKEND_URL}/api/submit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(processedData)
+        });
+        const responseData = await backendResponse.json();
+
+        return res.status(backendResponse.status).json(responseData);
+    } catch (error) {
+        console.error('Failed to submit data to the Flask backend:', error);
+        return res.status(502).json({
+            status: 'error',
+            message: 'Unable to reach the Flask backend.'
+        });
+    }
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", service: "express-frontend" });
+});
+
+// Proxy to the Flask backend
+app.get("/api/message", async (req, res) => {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/message`);
+    res.status(response.status).json(await response.json());
+  } catch (err) {
+    res.status(502).json({ error: "Backend unreachable" });
+  }
+});
+
+module.exports = app; // Export the app for testing purposes
